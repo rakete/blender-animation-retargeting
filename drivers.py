@@ -9,49 +9,60 @@ def extract_rot_from_mat(mat, axis):
 def extract_loc_from_mat(mat, axis):
 	return getattr(mat.to_translation(), axis)
 
-
 def bone_mat(name, bone, src):
-	mat = Matrix.Translation(Vector(src[0:3]))
-	quat = Quaternion(src[3:])
-	mat = mat @ quat.to_matrix().to_4x4()
-
 	obj = bpy.data.objects[name]
 	s = obj.animation_retarget_state
+
 	mapping = s.get_mapping_for_target(bone)
-	rest_mat = data_to_matrix4x4(mapping.rest)
-	offset_mat = data_to_matrix4x4(mapping.offset)
 	src_arma, src_pose = s.get_pose_and_arma_bone('source', mapping.source)
 	dest_arma, dest_pose = s.get_pose_and_arma_bone('target', mapping.target)
+
+	mat = Matrix.Translation(Vector(src[0:3]))
+	quat = Quaternion(src[3:])
+	epsilon = 0.001
+	if dest_pose.lock_rotation[0]:
+		euler = quat.to_euler()
+		x = euler[0]
+		if abs(x) > epsilon:
+			anti_x = Quaternion((1, 0, 0), -x)
+			quat = quat @ anti_x
+	if dest_pose.lock_rotation[2]:
+		euler = quat.to_euler()
+		z = euler[2]
+		if abs(z) > epsilon:
+			anti_z = Quaternion((0, 0, 1), -z)
+			quat = quat @ anti_z
+	if dest_pose.lock_rotation[1]:
+		euler = quat.to_euler()
+		y = euler[1]
+		if abs(y) > epsilon:
+			anti_y = Quaternion((0, 1, 0), -y)
+			quat = quat @ anti_y
+	mat = mat @ quat.to_matrix().to_4x4()
+
+	rest_mat = data_to_matrix4x4(mapping.rest)
+	offset_mat = data_to_matrix4x4(mapping.offset)
 	src_ref_mat = rot_mat(s.source.matrix_world) @ rot_mat(src_arma.matrix_local)
 	dest_ref_mat = rot_mat(s.target.matrix_world) @ rot_mat(rest_mat)
-	diff_mat = src_ref_mat. inverted() @ dest_ref_mat
+	diff_mat = src_ref_mat.inverted() @ dest_ref_mat
 	scale = s.source.scale[0]
 
 	mat.translation *= scale
 	mat = diff_mat.inverted() @ mat @ diff_mat
 	mat = offset_mat @ mat
-
-	if s.correct_root_pivot and s.root_bone != '' and dest_arma.name == s.root_bone:
-		src_root_mat = s.source.matrix_world @ src_arma.matrix_local
-		dest_root_mat = s.target.matrix_world @ rest_mat
-		src_root_loc = src_root_mat.to_translation()
-		dest_root_loc = dest_root_mat.to_translation()
-		root_delta_mat = Matrix.Translation(Vector((0,0,(dest_root_loc[2] - src_root_loc[2]))))
-
-		src_rot_matrix = rot_mat(dest_ref_mat @ rot_mat(mat) @ dest_ref_mat.inverted())
-		applied_delta_mat = loc_mat((dest_ref_mat.inverted() @ src_rot_matrix) @ root_delta_mat)
-		mat = loc_mat(dest_ref_mat.inverted() @ root_delta_mat).inverted() @ applied_delta_mat @ mat
-
 	return mat
 
 def bone_rot(axis, name, bone, *src):
 	mat = bone_mat(name, bone, src)
 	return extract_rot_from_mat(mat, axis)
 
+def bone_rot_test(axis, name, bone, *src):
+	mat = bone_mat(name, bone, src)
+	return extract_rot_from_mat(mat, axis)
+
 def bone_loc(axis, name, bone, *src):
 	mat = bone_mat(name, bone, src)
 	return extract_loc_from_mat(mat, axis)
-
 
 def ik_target_mat(name, index, src):
 	mat = Matrix.Translation(Vector(src[0:3]))
@@ -145,6 +156,7 @@ def create_vars(loc_driver, rot_driver, t, s_source, mapping_source, space, offs
 def build():
 	bpy.app.driver_namespace['rt_bone_rot'] = bone_rot
 	bpy.app.driver_namespace['rt_bone_loc'] = bone_loc
+	bpy.app.driver_namespace['rt_bone_test'] = bone_rot_test
 	bpy.app.driver_namespace['rt_ikt_rot'] = ik_target_rot
 	bpy.app.driver_namespace['rt_ikt_loc'] = ik_target_loc
 
@@ -160,7 +172,6 @@ def build():
 
 		loc_drivers = dest_pose.driver_add('location')
 		rot_drivers = dest_pose.driver_add('rotation_euler')
-
 
 		for axis, lfc, rfc in zip(('x','y','z'), loc_drivers, rot_drivers):
 			loc_driver = lfc.driver
@@ -184,7 +195,7 @@ def build():
 				dest_pose.driver_remove(short_data_path, channel)
 
 
-	
+
 	for i, limb in enumerate(s.ik_limbs):
 		if not limb.enabled:
 			continue
