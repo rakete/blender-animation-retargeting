@@ -170,8 +170,18 @@ def build():
 
 			loc_driver.expression = 'rt_bone_loc("%s","%s","%s",%s)' % (axis, s.target.name, mapping.target, ','.join(src_vars))
 			rot_driver.expression = 'rt_bone_rot("%s","%s","%s",%s)' % (axis, s.target.name, mapping.target, ','.join(src_vars))
+			#if mapping.target == "lShldrBend" or mapping.target == "lShldrTwist" or mapping.target == "lForearmBend" or mapping.target == "lForearmTwist":
+			#	rot_driver.expression = 'rt_bone_test("%s","%s","%s",%s)' % (axis, s.target.name, mapping.target, ','.join(src_vars))
+			#else:
+			#	rot_driver.expression = 'rt_bone_rot("%s","%s","%s",%s)' % (axis, s.target.name, mapping.target, ','.join(src_vars))
 
-
+		for channel, lfc, rfc in zip([0, 1, 2], loc_drivers, rot_drivers):
+			if dest_pose.lock_location[channel]:
+				short_data_path = lfc.data_path.split('.')[-1]
+				dest_pose.driver_remove(short_data_path, channel)
+			if dest_pose.lock_rotation[channel]:
+				short_data_path = rfc.data_path.split('.')[-1]
+				dest_pose.driver_remove(short_data_path, channel)
 
 
 	
