@@ -56,7 +56,7 @@ class MainPanel(bpy.types.Panel):
 					layout.label(text='Rest Alignment')
 					alignment.draw_panel(layout.box())
 
-					if s.get_alignments_count() > 0:
+					if len(s.mappings) > 0:
 						layout.separator()
 						layout.label(text='Corrections')
 						corrections.draw_panel(layout.box())
@@ -69,7 +69,7 @@ class MainPanel(bpy.types.Panel):
 						layout.label(text='Options')
 						box = layout.box()
 						box.prop(s, 'disable_drivers', text='Disable Drivers')
-						
+
 		else:
 			layout.label(text='No armature selected', icon='ERROR')
 
@@ -180,7 +180,6 @@ class State(bpy.types.PropertyGroup):
 			if mapping.target == name:
 				return mapping
 
-
 	def get_alignments_count(self):
 		count = 0
 
@@ -214,7 +213,7 @@ class State(bpy.types.PropertyGroup):
 		if self.is_importing:
 			return
 
-		if not self.disable_drivers and self.get_alignments_count() > 0:
+		if not self.disable_drivers and len(self.mappings) > 0:
 			ik.build()
 			drivers.build()
 		else:
@@ -229,7 +228,7 @@ class State(bpy.types.PropertyGroup):
 
 		needs_rebuild = False
 
-		for active, name in ((self.correct_feet, 'left-foot'), (self.correct_feet, 'right-foot'), 
+		for active, name in ((self.correct_feet, 'left-foot'), (self.correct_feet, 'right-foot'),
 							(self.correct_hands, 'left-hand'), (self.correct_hands, 'right-hand')):
 			limb = self.get_ik_limb(name)
 
@@ -277,9 +276,9 @@ class State(bpy.types.PropertyGroup):
 		ik_limbs = [l.serialize() for l in self.ik_limbs]
 
 		return {
-			'mappings': mappings, 
-			'ik_limbs': ik_limbs, 
-			'correct_feet': self.correct_feet, 
+			'mappings': mappings,
+			'ik_limbs': ik_limbs,
+			'correct_feet': self.correct_feet,
 			'correct_hands': self.correct_hands
 		}
 
@@ -328,7 +327,7 @@ class UseInvalidOperator(bpy.types.Operator):
 
 
 classes = (
-	MainPanel, 
+	MainPanel,
 	*data.classes,
 	*loadsave.classes,
 	*mapping.classes,

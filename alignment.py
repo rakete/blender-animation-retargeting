@@ -4,7 +4,7 @@ from .utilfuncs import *
 
 def draw_panel(layout):
 	s = state()
-	n = s.get_alignments_count()
+	n = len(s.mappings)
 
 	if not s.editing_alignment:
 		if n == 0:
