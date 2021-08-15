@@ -1,7 +1,9 @@
 import bpy
 from mathutils import Matrix, Vector
 
-def state():
+def state(obj=None):
+	if obj is not None:
+		return obj.animation_retarget_state
 	return bpy.context.object.animation_retarget_state
 
 def data_to_matrix4x4(values):

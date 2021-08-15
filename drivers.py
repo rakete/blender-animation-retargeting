@@ -179,8 +179,8 @@ def build():
 
 			src_vars = create_vars(loc_driver, rot_driver, ('LOC', 'ROT'), s.source, mapping.source, 'LOCAL_SPACE')
 
-			loc_driver.expression = 'rt_bone_loc("%s","%s","%s",%s)' % (axis, s.target.name, mapping.target, ','.join(src_vars))
-			rot_driver.expression = 'rt_bone_rot("%s","%s","%s",%s)' % (axis, s.target.name, mapping.target, ','.join(src_vars))
+			loc_driver.expression = 'rt_bone_loc("%s","%s","%s",%s)' % (axis, s.source.name, mapping.target, ','.join(src_vars))
+			rot_driver.expression = 'rt_bone_rot("%s","%s","%s",%s)' % (axis, s.source.name, mapping.target, ','.join(src_vars))
 			#if mapping.target == "lShldrBend" or mapping.target == "lShldrTwist" or mapping.target == "lForearmBend" or mapping.target == "lForearmTwist":
 			#	rot_driver.expression = 'rt_bone_test("%s","%s","%s",%s)' % (axis, s.target.name, mapping.target, ','.join(src_vars))
 			#else:

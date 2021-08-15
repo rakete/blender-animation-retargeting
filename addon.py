@@ -38,13 +38,13 @@ class MainPanel(bpy.types.Panel):
 		if context.object != None and context.object.type == 'ARMATURE':
 			s = state()
 			split = layout.row().split(factor=0.244)
-			split.column().label(text='Target:')
+			split.column().label(text='Source:')
 			split.column().label(text=context.object.name, icon='ARMATURE_DATA')
-			layout.prop(s, 'selected_source', text='Source', icon='ARMATURE_DATA')
+			layout.prop(s, 'selected_target', text='Target', icon='ARMATURE_DATA')
 			layout.separator()
 
-			if s.source == None:
-				layout.label(text='Choose a source armature to continue', icon='INFO')
+			if s.target == None:
+				layout.label(text='Choose a target armature to continue', icon='INFO')
 			else:
 				loadsave.draw_panel(layout.box())
 				layout.separator()
@@ -76,12 +76,14 @@ class MainPanel(bpy.types.Panel):
 
 
 
-
 class State(bpy.types.PropertyGroup):
-	selected_source: bpy.props.PointerProperty(
+	def do_update(self, ctx):
+		state().update_source()
+
+	selected_target: bpy.props.PointerProperty(
 		type=bpy.types.Object,
 		poll=lambda self, obj: obj.type == 'ARMATURE' and obj != bpy.context.object,
-		update=lambda self, ctx: state().update_source()
+		update=do_update,
 	)
 	invalid_selected_source: bpy.props.PointerProperty(
 		type=bpy.types.Object,
@@ -105,14 +107,17 @@ class State(bpy.types.PropertyGroup):
 	editing_mappings: bpy.props.BoolProperty(default=False)
 	editing_alignment: bpy.props.BoolProperty(default=False)
 
-
 	def is_active(self):
-		return bpy.context.object.type == 'ARMATURE' and self.source != None
+		return bpy.context.object.type == 'ARMATURE' and self.target != None
 
 	def update_source(self):
-		self.target = bpy.context.object
+		print("update_source")
+		self.target = self.selected_target
+		self.selected_source = bpy.context.object
+		print(self.selected_source)
+		print(self.target)
 
-		if self.selected_source == None:
+		if self.selected_target == None:
 			return
 
 		if len(self.mappings) > 0:
@@ -156,7 +161,7 @@ class State(bpy.types.PropertyGroup):
 		return self.source.data
 
 	def get_target_armature(self):
-		return bpy.context.object.data
+		return self.target.data
 
 	def get_bone_from(self, collection, name):
 		return next((bone for bone in collection if bone.name == name), None)
