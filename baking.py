@@ -49,6 +49,8 @@ def transfer_anim(context):
 
 	s.target.animation_data.action = target_action
 
+	s.source.select_set(False)
+	s.target.select_set(True)
 	bpy.ops.nla.bake(
 		frame_start=min(keyframes),
 		frame_end=max(keyframes),
@@ -58,6 +60,8 @@ def transfer_anim(context):
 		bake_types={'POSE'},
 		only_selected=False
 	)
+	s.target.select_set(False)
+	s.source.select_set(True)
 
 	if s.bake_linear:
 		for fc in s.target.animation_data.action.fcurves:
