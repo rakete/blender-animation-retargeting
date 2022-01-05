@@ -214,11 +214,11 @@ class State(bpy.types.PropertyGroup):
 		return baseline
 
 
-	def update_drivers(self):
-		if self.is_importing:
+	def update_drivers(self, force=False):
+		if not force and self.is_importing:
 			return
 
-		if not self.disable_drivers and len(self.mappings) > 0:
+		if force or not self.disable_drivers and len(self.mappings) > 0:
 			ik.build()
 			drivers.build()
 		else:
